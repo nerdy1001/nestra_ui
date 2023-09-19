@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  name            String? 
+  firstName       String?
+  lastName        String?
+  email           String? @unique
+  emailVerified   DateTime?
+  phoneNumber     String?
+  image           String?
+  hashedPassword  String?
+  favoriteIds     String[] @db.ObjectId
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  isHost          Boolean?
+
+  accounts   Account[]
+  properties Property[]
+  comment    Comment[]
+  contact    Contact[]
+}
+
+model Account {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String   @db.ObjectId
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.String
+  access_token       String?  @db.String
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.String
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Property {
+  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  title              String
+  description        String
+  city               String
+  address            String
+  createdAt          DateTime @default(now())
+  coverPhoto         String
+  otherPhotos        String[]
+  category           String
+  amenities          String[]
+  extraFees          extraFeesParams[]
+  pricing            pricingParams[]
+  houseArrangement   String
+  houseRules         String
+  IdCardNumber       String
+  IdPhoto            String[]
+  userId             String @db.ObjectId
+
+  user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment  Comment[]
+  contact  Contact[]
+}
+
+model Comment {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  text        String
+  author      User  @relation(fields: [authorId], references: [id])
+  authorId    String @db.ObjectId
+  property    Property  @relation(fields: [propertyId], references: [id])
+  propertyId  String @db.ObjectId
+  createdAt   DateTime @default(now())
+}
+
+model Contact {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  property      Property  @relation(fields: [propertyId], references: [id])
+  propertyId    String @db.ObjectId
+  contactId     String @db.ObjectId
+  contact       User  @relation(fields: [contactId], references: [id])
+  contactedAt   DateTime @default(now())
+}
+
+type pricingParams {
+  id            String
+  price         String
+  rentalPeriod  String
+  unitType      String
+}
+
+type extraFeesParams {
+  id            String
+  feeName       String
+  amount        String
+}
